@@ -1,12 +1,13 @@
 import { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Calendar } from "react-native-calendars";
-import { View, StyleSheet } from "react-native";
+import { View, StyleSheet, Text, TouchableOpacity } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../types/root.types";
-import { StateType } from "../types/weather.types";
+import { StateType, WeatherType } from "../types/weather.types";
 import { useIsFocused } from "@react-navigation/native";
 import { sagaActions } from "../redux/sagaActions";
+import { getAvarageTemp } from "../helpers/getAvarageTemp";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Calendar">;
 
@@ -30,11 +31,40 @@ export default function CalendarScreen({ navigation }: Props) {
             textMonthFontFamily: "Roboto-Regular",
             textDayHeaderFontFamily: "Roboto-Regular",
           }}
-          onDayPress={(day) => {
-            navigation.navigate("OneDay", { date: day.dateString });
-          }}
           minDate={weather[0].dt_txt}
           maxDate={weather[weather.length - 1].dt_txt.split(" ")[0]}
+          dayComponent={({ date, state }) => {
+            return (
+              <View style={styles.cell}>
+                {date?.dateString && (
+                  <TouchableOpacity
+                    onPress={() => {
+                      if (state !== "disabled")
+                        navigation.navigate("OneDay", {
+                          date: date.dateString,
+                        });
+                    }}
+                  >
+                    <Text
+                      style={{
+                        textAlign: "center",
+                        color:
+                          state === "disabled" ? "lightgrey" : "deepskyblue",
+                      }}
+                    >
+                      {date?.day}
+                    </Text>
+                    {state !== "disabled" && (
+                      <Text style={styles.temp}>
+                        {getAvarageTemp(date.dateString, weather)}
+                        {"\u00b0"}C
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                )}
+              </View>
+            );
+          }}
         />
       )}
     </View>
@@ -48,5 +78,14 @@ const styles = StyleSheet.create({
     width: "100%",
     padding: 10,
     backgroundColor: "powderblue",
+  },
+  cell: {
+    height: 40,
+    width: "100%",
+    paddingHorizontal: 4,
+  },
+  temp: {
+    marginTop: 6,
+    textAlign: "center",
   },
 });
